@@ -782,6 +782,11 @@ return [
             'route' => 'profile.edit',
             'icon' => 'bi bi-person',
         ],
+        [
+            'text' => 'Users',
+            'route' => 'users.index',
+            'icon' => 'bi bi-people',
+        ],
     ],
 
     /*
