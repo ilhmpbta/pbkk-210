@@ -1,58 +1,143 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PBKK-210
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Tugas Mandiri PBKK — Dashboard & RBAC Implementation.
 
-## About Laravel
+Laravel 13 admin panel for a mock academic portal, built on top of Laravel Breeze for authentication, AdminLTE 4 for the visual shell, and `spatie/laravel-permission` for dynamic, database-backed role-based access control.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Stack
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **PHP** ^8.3
+- **Laravel** ^13.17
+- **Laravel Breeze** ^2.4 (Blade stack) — authentication scaffolding
+- **AdminLTE** ^4.10 via `jeroennoten/laravel-adminlte` ^4.0 — admin panel layout
+- **Spatie Laravel Permission** ^8.5 — roles and permissions stored in the database
+- **SQLite** — default database (file at `database/database.sqlite`)
+- **Faker** — dummy data seeding
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Features
 
-## Learning Laravel
+- **AdminLTE dashboard shell** with sidebar navigation, dark-mode toggle, and fullscreen widget
+- **Laravel Breeze authentication** — login, registration, password reset, email verification, password confirmation
+- **Spatie RBAC** — `Admin` (full access) and `Staf` (limited) roles persisted to `roles`, `permissions`, `model_has_roles`, `role_has_permissions` tables
+- **Dashboard widgets** — three aggregated `count()` statistics (total users, total admins, total staf) rendered as AdminLTE `small-box` widgets
+- **User index** — paginated table (10 rows/page) with `when()`-based search across `name` and `email`, and `withQueryString()` to preserve the search keyword across pagination
+- **Permission-gated deletion** — `UserController::destroy` is protected by constructor middleware `permission:delete-data`; the "Hapus" button is wrapped in `@can('delete-data')` so it renders only for admin users
+- **Faker seeders** — `RoleSeeder` + `UserSeeder` + `DummyUserSeeder` creates 32 users on `migrate --seed`
+- **One-click demo login** — quick-login buttons on `/login` for evaluator convenience (see "Demo quick login" below)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Installation
 
 ```bash
-composer require laravel/boost --dev
+# 1. Clone
+git clone https://github.com/ilhmpbta/pbkk-210
+cd pbkk-210
 
-php artisan boost:install
+# 2. PHP dependencies
+composer install
+
+# 3. Environment
+cp .env.example .env
+php artisan key:generate
+
+# 4. Create SQLite database (if not present)
+touch database/database.sqlite
+
+# 5. Migrate and seed
+php artisan migrate:fresh --seed
+
+# 6. Frontend assets
+npm install
+npm run build
+
+# 7. Serve
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Open <http://localhost:8000>.
 
-## Contributing
+The seeding step is important — the demo accounts and the permission set are created by the seeders. `php artisan migrate` alone will leave you without roles, permissions, or test users, and the demo-login buttons on `/login` will return 404.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Demo accounts
 
-## Code of Conduct
+| Role | Email | Password | Can delete? |
+|------|-------|----------|-------------|
+| Admin | `admin@example.com` | `password` | Yes |
+| Staf | `staf@example.com` | `password` | No |
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Both accounts are seeded with `email_verified_at = now()` so they pass the `verified` middleware on `/dashboard`.
 
-## Security Vulnerabilities
+## Demo quick login
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+The login page (`/login`) includes two one-click login buttons:
 
-## License
+- **Login as Admin** → authenticates as `admin@example.com`
+- **Login as Staf** → authenticates as `staf@example.com`
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+These POST to a `demo-login/{role}` route in `routes/web.php` which calls `Auth::login()` on the seeded user. **This is a demo convenience, not a production feature** — it bypasses password verification entirely. If you deploy this beyond a classroom evaluation, remove the `demo-login` route and the two buttons from `resources/views/auth/login.blade.php`.
+
+## Using the app
+
+1. Visit `/login`. Use either a demo quick-login button or the seeded credentials above.
+2. **Dashboard** — three widgets show total users, total admins, and total staf (dynamically via `count()` aggregates in `DashboardController`).
+3. **Users** — paginated list of all users with a search box. Type a name or email fragment and click Search; the filter is preserved across pagination pages via `withQueryString()`.
+4. **Hapus (delete) button** — visible only to users with the `delete-data` permission (Admin only). Staf users do not see the button, and the `DELETE /users/{id}` route returns 403 for them because the `permission:delete-data` middleware is applied at the controller constructor level.
+5. **Profile** — update name / email / password, or delete your own account (Breeze default).
+6. **Logout** — top-right user menu.
+
+## Demonstration script
+
+To demonstrate the RBAC guard in class:
+
+1. Click **Login as Admin** on `/login`.
+2. Navigate to **Users** in the sidebar. Note the red **Hapus** button next to each row.
+3. Log out, click **Login as Staf**.
+4. Navigate to **Users** again. The **Hapus** button is gone.
+5. (Optional) Attempt a direct DELETE request to `/users/{id}` while logged in as Staf — the server returns 403 before reaching the controller.
+
+## Project structure
+
+```
+app/Http/Controllers/
+├── DashboardController.php    # 3 count() aggregates
+├── UserController.php         # index() with when()+withQueryString, destroy() with permission middleware
+└── ...
+
+app/Models/User.php            # HasRoles trait from Spatie
+database/seeders/
+├── RoleSeeder.php             # Admin + Staf roles; delete-data permission granted to Admin
+├── UserSeeder.php             # admin@example.com + staf@example.com
+├── DummyUserSeeder.php        # 30 faker-generated Staf users
+└── DatabaseSeeder.php
+resources/views/
+├── dashboard.blade.php        # 3 small-box widgets
+├── users/index.blade.php      # search form + table + pagination + @can('delete-data')
+├── auth/login.blade.php       # includes demo quick-login buttons
+└── ...
+routes/web.php                 # demo-login, dashboard, users.index, users.destroy
+```
+
+## Screenshot
+
+![AdminLTE dashboard with three count widgets](docs/dashboard.png)
+
+## Repo hygiene
+
+- `.env` is excluded via `.gitignore`
+- `vendor/`, `node_modules/`, and `public/build/` are excluded
+- `database/database.sqlite` is excluded (each clone regenerates it via `migrate --seed`)
+- `.env.example` contains no secrets
+
+Verify with:
+
+```bash
+git ls-files | grep -E '^(vendor|node_modules|\.env$|database/database\.sqlite$)'
+```
+
+The command should return nothing.
+
+## References
+
+- [AdminLTE docs (jeroennoten/Laravel-AdminLTE)](https://jeroennoten.github.io/Laravel-AdminLTE/)
+- [Spatie Laravel Permission](https://spatie.be/docs/laravel-permission)
+- [Laravel Breeze](https://laravel.com/docs/breeze)
+- [Laravel 13 docs](https://laravel.com/docs/13.x)
