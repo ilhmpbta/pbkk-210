@@ -44,6 +44,19 @@
                         <button type="submit" class="btn btn-primary">Log in</button>
                     </div>
                 </form>
+
+                <hr class="my-4">
+                <p class="text-muted small mb-2">Demo quick login:</p>
+                <div class="d-flex gap-2">
+                    <form method="POST" action="{{ route('demo-login', 'admin') }}" class="flex-fill">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-outline-primary w-100">Login as Admin</button>
+                    </form>
+                    <form method="POST" action="{{ route('demo-login', 'staf') }}" class="flex-fill">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-outline-secondary w-100">Login as Staf</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
